@@ -4,7 +4,7 @@ Modifications made to Daniel Farrell's pvTrace (https://github.com/danieljfarrel
 
 Added surface normal recording in photon-tracer.
 
-To use, copy photon_tracer.py into the algorithm folder of exiting pvTrace install.
+To use, replace the contents of the installed pvtrace (i.e. for MacOS under ~/opt/anaconda3/envs/pvtrace-env/lib/python3/site-packages/pvtrace/) with the contents of pvtrace-v2.1.sv
 
 LSC_script.py and LSC_script_parallel_comp.py require manual input of desired input parameters in the code. LSC_script_parallel_comp uses multiprocessing to access all computing cores in a machine. Requires install of multiprocessing.
 

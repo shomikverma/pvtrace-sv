@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 #import trimesh
 import pandas as pd
 from dataclasses import asdict
-import progressbar 
+import progressbar
 import trimesh
 from matplotlib.pyplot import plot, hist, scatter
 from matplotlib.animation import FuncAnimation
@@ -33,75 +33,75 @@ def createWorld(l, w, d):
     geometry = Box(
         (l * 100, w * 100, d * 100),
         material=Material(refractive_index=1.0),
-        )   
+        )
     )
-    
+
     return world
 
 def createBoxLSC(dimX, dimY, dimZ):
     LSC = Node(
         name = "LSC",
-        geometry = 
+        geometry =
         Box(
             (dimX, dimY, dimZ),
             material = Material(
                 refractive_index = 1.5,
                 components = [
-                    Absorber(coefficient = 0.525), 
+                    Absorber(coefficient = 0.525),
                     ]
             ),
         ),
         parent = world
     )
-    
+
     return LSC
 
 def createCylLSC(dimXY, dimZ):
     LSC = Node(
         name = "LSC",
-        geometry = 
+        geometry =
         Cylinder(
             dimZ, dimXY/2,
             material = Material(
                 refractive_index = 1.5,
                 components = [
-                    Absorber(coefficient = 0.525), 
+                    Absorber(coefficient = 0.525),
                     ]
             ),
         ),
         parent = world
     )
-    
+
     return LSC
 
 def createSphLSC(dimXYZ):
     LSC = Node(
         name = "LSC",
-        geometry = 
+        geometry =
         Sphere(
             dimXYZ/2,
             material = Material(
                 refractive_index = 1.5,
                 components = [
-                    Absorber(coefficient = 0.525), 
+                    Absorber(coefficient = 0.525),
                     ]
             ),
         ),
         parent = world
     )
-    
+
     return LSC
 
 def createMeshLSC(self):
     LSC = Node(
         name = "LSC",
-        geometry = 
+        geometry =
         Mesh(
-            trimesh = trimesh.load(self.STLfile),
+            trimesh = trimesh.load(STLfile),
             material = Material(
                 refractive_index = 1.5,
                 components = [
-                    Absorber(coefficient = 0.525), 
+                    Absorber(coefficient = 0.525),
                     ]
             ),
         ),
@@ -132,98 +132,98 @@ def addBottomSurf(LSC, bottomMir, bottomScat):
         bottomSpacer.location=[0,0,-(LSCdimZ + LSCdimZ/100)/2]
         bottomSpacer.geometry.material.refractive_index = 1.0
         del bottomSpacer.geometry.material.components[0]
-        
+
     class BottomReflector(FresnelSurfaceDelegate):
         def reflectivity(self, surface, ray, geometry, container, adjacent):
             normal = geometry.normal(ray.position)
             if((bottomMir or bottomScat) and np.allclose(normal, [0,0,-1])):
                 return 1.0
-            
+
             return super(BottomReflector, self).reflectivity(surface, ray, geometry, container, adjacent)
-        
+
         def reflected_direction(self, surface, ray, geometry, container, adjacent):
             normal = geometry.normal(ray.position)
             if(bottomScat and np.allclose(normal, [0,0,-1])):
                 return tuple(lambertian())
             return super(BottomReflector, self).reflected_direction(surface, ray, geometry, container, adjacent)
-        
+
         def transmitted_direction(self, surface, ray, geometry, container, adjacent):
             normal = geometry.normal(ray.position)
-            
+
             return super(BottomReflector, self).transmitted_direction(surface, ray, geometry, container, adjacent)
-        
+
     if(bottomMir or bottomScat):
         bottomSpacer.geometry.material.surface = Surface(delegate = BottomReflector())
-    
+
     return LSC
 
 def addSolarCells(LSC, left, right, front, back, allEdges, bottom):
-    
+
     class SolarCellEdges(FresnelSurfaceDelegate):
         def reflectivity(self, surface, ray, geometry, container, adjacent):
             normal = geometry.normal(ray.position)
-            
+
             # if(abs(normal[2]- -1)<0.1 and bottom):
             #     return 1.0
-            
+
             # if(allEdges or left or right or front or back == False):
             #     return super(SolarCellEdges, self).reflectivity(surface, ray, geometry, container, adjacent)
-            
+
             # if(abs(normal[0]- -1)<0.1 and left):
             #     return 0.0
             # elif(abs(normal[0]- -1)<0.1 and not left):
             #     return 1.0
-            
+
             # if(abs(normal[0]-1)<0.1 and right):
             #     return 0.0
             # elif(abs(normal[0]-1)<0.1 and not right):
             #     return 1.0
-            
+
             # if(abs(normal[1]- -1)<0.1 and front):
             #     return 0.0
             # elif(abs(normal[1]- -1)<0.1 and not front):
             #     return 1.0
-            
+
             # if(abs(normal[1]-1)<0.1 and back):
             #     return 0.0
             # elif(abs(normal[1]-1)<0.1 and not back):
             #     return 1.0
-            
+
             # if(abs(normal[2])<0.2 and allEdges):
             #     return 0.0
-            
-            
+
+
             if(abs(normal[2]- -1)<0.1 and bottom):
                 return 1.0
-            
+
             if((allEdges or left or right or front or back) == False):
                 return super(SolarCellEdges, self).reflectivity(surface, ray, geometry, container, adjacent)
-            
+
             if(abs(normal[0]- -1)<0.1 and left):
                 return 0.0
             elif(abs(normal[0]- -1)<0.1 and not left):
                 return 1.0
-            
+
             if(abs(normal[0]-1)<0.1 and right):
                 return 0.0
             elif(abs(normal[0]-1)<0.1 and not right):
                 return 1.0
-            
+
             if(abs(normal[1]- -1)<0.1 and front):
                 return 0.0
             elif(abs(normal[1]- -1)<0.1 and not front):
                 return 1.0
-            
+
             if(abs(normal[1]-1)<0.1 and back):
                 return 0.0
             elif(abs(normal[1]-1)<0.1 and not back):
                 return 1.0
-            
+
             if(abs(normal[2])<0.2 and allEdges):
                 return 0.0
-            
+
             return super(SolarCellEdges, self).reflectivity(surface, ray, geometry, container, adjacent)
-        
+
         def transmitted_direction(self, surface, ray, geometry, container, adjacent):
             normal = geometry.normal(ray.position)
             if(abs(normal[0]- -1)<0.1 and left):
@@ -237,9 +237,9 @@ def addSolarCells(LSC, left, right, front, back, allEdges, bottom):
             if(abs(normal[2])<0.2 and allEdges):
                 return ray.position
             return super(SolarCellEdges, self).transmitted_direction(surface, ray, geometry, container, adjacent)
-    
+
     LSC.geometry.material.surface = Surface(delegate = SolarCellEdges())
-    
+
     return LSC
 
 def planck(wav, T):
@@ -253,23 +253,23 @@ def planck(wav, T):
 dist = None
 def wavelengthDist():
     return dist.sample(np.random.uniform())
-    
+
 def initLight(lightWavMin, lightWavMax):
-    
+
     # move wavelengthdist and planck back if desired, but gives same results
-    
-    
-    
+
+
+
     # generate x-axis in increments from 1nm to 3 micrometer in 1 nm increments
     # starting at 1 nm to avoid wav = 0, which would result in division by zero.
     wavelengths = np.arange(lightWavMin*1e-9, lightWavMax*1e-9, 1e-9)
     intensity5800 = planck(wavelengths, 5800.)
     global dist
     dist = Distribution(wavelengths*1e9, intensity5800)
-    
-    
+
+
     # lambdadist = lambda: dist.sample(np.random.uniform())
-    
+
     light = Node(
         name = "Light",
         light = Light(
@@ -298,19 +298,19 @@ def addPointSource(light):
 def addLightDiv(light, lightDiv):
     light.light.direction = functools.partial(cone, np.radians(lightDiv))
     return light
-    
+
 def doRayTracing(numRays):
     entrance_rays = []
     exit_rays = []
     exit_norms = []
     max_rays = numRays
-        
+
     vis = MeshcatRenderer(open_browser=False, transparency=False, opacity=0.5, wireframe=True)
     scene = Scene(world)
     vis.render(scene)
-    
+
     np.random.seed(3)
-    
+
     f = 0
     widgets = [progressbar.Percentage(), progressbar.Bar()]
     bar = progressbar.ProgressBar(widgets=widgets, max_value=max_rays).start()
@@ -320,8 +320,8 @@ def doRayTracing(numRays):
         "short_length": LSCdimZ * 0.1,
         }
     # fig = plt.figure(num = 4, clear = True)
-    # ax = plt.axes(xlim =(0, 500),  
-    #                 ylim =(0, 1)) 
+    # ax = plt.axes(xlim =(0, 500),
+    #                 ylim =(0, 1))
     # line, = ax.plot([], [], lw=3)
     k = 0
     # if(convPlot):
@@ -346,13 +346,13 @@ def doRayTracing(numRays):
             entrance_rays.append(path[0])
             if events[-1] in (photon_tracer.Event.ABSORB, photon_tracer.Event.KILL):
                 exit_norms.append(surfnorms[-1])
-                exit_rays.append(path[-1])  
+                exit_rays.append(path[-1])
             elif events[-1] == photon_tracer.Event.EXIT:
                 exit_norms.append(surfnorms[-2])
                 j = surfnorms[-2]
                 if abs(j[2]) <= 0.5:
                     edge_emit+=1
-                exit_rays.append(path[-2]) 
+                exit_rays.append(path[-2])
             f += 1
             bar.update(f)
             k+=1
@@ -375,15 +375,15 @@ def doRayTracing(numRays):
                 # line.set_data(xdata,ydata)
                 # return line,
             # anim = FuncAnimation(fig, animate, interval=20, blit=True)
-            
+
     time.sleep(1)
     vis.render(scene)
-    
+
     return entrance_rays, exit_rays, exit_norms, ydata, convarr
 
 def RayTracingLoop(ray, scene):
-    
-    
+
+
     # for ray in scene.emit(max_rays):
     steps = photon_tracer.follow(scene, ray, emit_method='redshift' )
     path,surfnorms,events = zip(*steps)
@@ -398,7 +398,7 @@ def RayTracingLoop(ray, scene):
     if events[-1] in (photon_tracer.Event.ABSORB, photon_tracer.Event.KILL):
         # exit_norms.append(surfnorms[-1])
         exit_norms = surfnorms[-1]
-        # exit_rays.append(path[-1])  
+        # exit_rays.append(path[-1])
         exit_rays = path[-1]
     elif events[-1] == photon_tracer.Event.EXIT:
         # exit_norms.append(surfnorms[-2])
@@ -407,7 +407,7 @@ def RayTracingLoop(ray, scene):
         # if abs(j[2]) <= 0.5:
         #     # edge_emit+=1
         #     edge_emit = 1
-        # exit_rays.append(path[-2]) 
+        # exit_rays.append(path[-2])
         exit_rays = path[-2]
     else:
         exit_norms = None
@@ -420,23 +420,23 @@ def RayTracingLoop(ray, scene):
     # if(len(ydata)>2):
     #     conv = conv*.95 + abs(ydata[-1] - ydata[-2])*.05
     # convarr.append(conv)
-        
+
     return entrance_rays, exit_rays, exit_norms
-        
+
 
 def doRayTracingParallel(numRays):
-    
+
     entrance_rays = []
     exit_rays = []
     exit_norms = []
     max_rays = numRays
-        
+
     vis = MeshcatRenderer(open_browser=False, transparency=False, opacity=0.5, wireframe=True)
     scene = Scene(world)
     vis.render(scene)
-    
+
     # np.random.seed(3)
-    
+
     f = 0
     # widgets = [progressbar.Percentage(), progressbar.Bar()]
     # bar = progressbar.ProgressBar(widgets=widgets, max_value=max_rays).start()
@@ -446,8 +446,8 @@ def doRayTracingParallel(numRays):
         "short_length": LSCdimZ * 0.1,
         }
     # fig = plt.figure(num = 4, clear = True)
-    # ax = plt.axes(xlim =(0, 500),  
-    #                 ylim =(0, 1)) 
+    # ax = plt.axes(xlim =(0, 500),
+    #                 ylim =(0, 1))
     # line, = ax.plot([], [], lw=3)
     k = 0
     # if(convPlot):
@@ -457,16 +457,16 @@ def doRayTracingParallel(numRays):
     conv = 1
     convarr = []
     edge_emit = 0
-    
+
     pool = mp.Pool(mp.cpu_count())
-    
+
     results = pool.starmap(RayTracingLoop, [(ray, scene) for ray in scene.emit(numRays)])
-    
+
     pool.close()
-            
+
     time.sleep(1)
     vis.render(scene)
-    
+
     # print(results)
     global saveData
     saveData = results
@@ -474,7 +474,7 @@ def doRayTracingParallel(numRays):
         entrance_rays.append(saveData[k][0])
         exit_rays.append(saveData[k][1])
         exit_norms.append(saveData[k][2])
-    
+
     return entrance_rays, exit_rays, exit_norms
 
 def analyzeResults(entrance_rays, exit_rays, exit_norms, ydata, convarr):
@@ -487,7 +487,7 @@ def analyzeResults(entrance_rays, exit_rays, exit_norms, ydata, convarr):
     entrance_wavs = []
     exit_wavs = []
     emit_wavs = []
-    
+
     for k in exit_norms:
         if k[2]!= None:
             if abs(k[2]) <= 0.5:
@@ -500,11 +500,11 @@ def analyzeResults(entrance_rays, exit_rays, exit_norms, ydata, convarr):
                 edge_emit_front+=1
             if(abs(k[1]-1)<0.1):
                 edge_emit_back+=1
-            
+
     print("\n Optical efficiency: " + str(edge_emit/numRays) + "\n")
     print("\t\tLeft \tRight \tFront \tBack \n")
     print("Edge emission\t" + str(edge_emit_left/numRays) + " \t" + str(edge_emit_right/numRays)+" \t" + str(edge_emit_front/numRays) + " \t" + str(edge_emit_back/numRays) + " \n")
-    
+
     if(saveFileName != ''):
         dataFile.write("Opt eff\t" + str(edge_emit/numRays) + "\n")
         dataFile.write("\t\tLeft \tRight \tFront \tBack \n")
@@ -543,8 +543,8 @@ def analyzeResults(entrance_rays, exit_rays, exit_norms, ydata, convarr):
     for k in range(len(exit_wavs)):
         if(exit_wavs[k]!=entrance_wavs[k]):
             emit_wavs.append(exit_wavs[k])
-            
-    
+
+
     plt.figure(1, clear = True)
     norm = plt.Normalize(*(wavMin,wavMax))
     wl = np.arange(wavMin, wavMax+1,2)
@@ -562,7 +562,7 @@ def analyzeResults(entrance_rays, exit_rays, exit_norms, ydata, convarr):
         plt.savefig(saveFolder+"/"+"xy_plot.png", dpi=figDPI)
     plt.title('Entrance/exit ray positions')
     plt.show()
-    
+
     plt.figure(2, clear = True)
     n, bins, patches = hist(entrance_wavs, bins = 10, histtype = 'step', label='entrance wavs')
     plot(wavelengths, intensity/max(intensity)*max(n))
@@ -571,7 +571,7 @@ def analyzeResults(entrance_rays, exit_rays, exit_norms, ydata, convarr):
     if(saveFolder!=''):
         plt.savefig(saveFolder+"/"+"entrance_wavs.png", dpi=figDPI)
     plt.show()
-            
+
     plt.figure(3, clear=True)
     n, bins, patches = hist(emit_wavs, bins = 10, histtype = 'step', label='emit wavs')
     plot(x, abs_spec*max(n), label = 'LR305 abs')
@@ -581,7 +581,7 @@ def analyzeResults(entrance_rays, exit_rays, exit_norms, ydata, convarr):
     if(saveFolder!=''):
         plt.savefig(saveFolder+"/"+"emit_wavs.png", dpi=figDPI)
     plt.show()
-    
+
     plt.figure(4)
     plot(range(len(entrance_rays)), ydata)
     plt.title('optical efficiency vs. rays generated')
@@ -591,7 +591,7 @@ def analyzeResults(entrance_rays, exit_rays, exit_norms, ydata, convarr):
     if(saveFolder!=''):
         plt.savefig(saveFolder+"/"+"conv_plot.png", dpi=figDPI)
     plt.pause(0.00001)
-    
+
     plt.figure(5)
     plot(range(len(entrance_rays)), convarr)
     plt.title('convergence')
@@ -601,8 +601,8 @@ def analyzeResults(entrance_rays, exit_rays, exit_norms, ydata, convarr):
     plt.yscale('log')
     if(saveFolder!=''):
         plt.savefig(saveFolder+"/"+"conv_plot2.png", dpi=figDPI)
-    plt.pause(0.00001)    
-    
+    plt.pause(0.00001)
+
 
 def analyzeResultsParallel(entrance_rays, exit_rays, exit_norms):
     edge_emit = 0
@@ -614,7 +614,7 @@ def analyzeResultsParallel(entrance_rays, exit_rays, exit_norms):
     entrance_wavs = []
     exit_wavs = []
     emit_wavs = []
-    
+
     for k in exit_norms:
         if k[2]!= None:
             if abs(k[2]) <= 0.5:
@@ -627,11 +627,11 @@ def analyzeResultsParallel(entrance_rays, exit_rays, exit_norms):
                 edge_emit_front+=1
             if(abs(k[1]-1)<0.1):
                 edge_emit_back+=1
-            
+
     print("\n Optical efficiency: " + str(edge_emit/numRays) + "\n")
     print("\t\tLeft \tRight \tFront \tBack \n")
     print("Edge emission\t" + str(edge_emit_left/numRays) + " \t" + str(edge_emit_right/numRays)+" \t" + str(edge_emit_front/numRays) + " \t" + str(edge_emit_back/numRays) + " \n")
-    
+
     if(saveFileName != ''):
         dataFile.write("Opt eff\t" + str(edge_emit/numRays) + "\n")
         dataFile.write("\t\tLeft \tRight \tFront \tBack \n")
@@ -670,8 +670,8 @@ def analyzeResultsParallel(entrance_rays, exit_rays, exit_norms):
     for k in range(len(exit_wavs)):
         if(exit_wavs[k]!=entrance_wavs[k]):
             emit_wavs.append(exit_wavs[k])
-            
-    
+
+
     plt.figure(1, clear = True)
     norm = plt.Normalize(*(wavMin,wavMax))
     wl = np.arange(wavMin, wavMax+1,2)
@@ -689,7 +689,7 @@ def analyzeResultsParallel(entrance_rays, exit_rays, exit_norms):
         plt.savefig(saveFolder+"/"+"xy_plot.png", dpi=figDPI)
     plt.title('Entrance/exit ray positions')
     plt.show()
-    
+
     plt.figure(2, clear = True)
     n, bins, patches = hist(entrance_wavs, bins = 10, histtype = 'step', label='entrance wavs')
     plot(wavelengths, intensity/max(intensity)*max(n))
@@ -698,7 +698,7 @@ def analyzeResultsParallel(entrance_rays, exit_rays, exit_norms):
     if(saveFolder!=''):
         plt.savefig(saveFolder+"/"+"entrance_wavs.png", dpi=figDPI)
     plt.show()
-            
+
     plt.figure(3, clear=True)
     n, bins, patches = hist(emit_wavs, bins = 10, histtype = 'step', label='emit wavs')
     plot(x, abs_spec*max(n), label = 'LR305 abs')
@@ -708,10 +708,10 @@ def analyzeResultsParallel(entrance_rays, exit_rays, exit_norms):
     if(saveFolder!=''):
         plt.savefig(saveFolder+"/"+"emit_wavs.png", dpi=figDPI)
     plt.show()
-    
-            
+
+
 #%% define inputs
-    
+
 start_time = time.time()
 
 wavMin = 200
@@ -720,6 +720,7 @@ LSCdimX = 6
 LSCdimY = 6
 LSCdimZ = .32
 LSCshape = 'Box'
+STLfile = ''
 LumType = 'Lumogen Red'
 LumConc = 500
 lightWavMin = 300
@@ -750,7 +751,7 @@ saveData = None
 maxZ = LSCdimZ
 if(LSCshape=='Sphere'):
     maxZ = LSCdimX
-    
+
 print('Input Received')
 
 world = createWorld(LSCdimX, LSCdimY, maxZ)
@@ -761,7 +762,7 @@ if(enclosingBox):
     enclBox.geometry.material.refractive_index=1.0
     del enclBox.geometry.material.components[0]
     enclBox.geometry.material.surface = Surface(delegate = NullSurfaceDelegate())
-    
+
 
 if(LSCshape == 'Box'):
     LSC = createBoxLSC(LSCdimX, LSCdimY, LSCdimZ)
@@ -790,7 +791,7 @@ if(LSCshape == 'Import Mesh'):
         LSCdimY = temp
         lightDimY = LSCdimY
         maxZ = LSCdimZ
-    
+
 if(LumType == 'Lumogen Red'):
     LSC, x, abs_spec, ems_spec = addLR305(LSC)
 
@@ -814,5 +815,5 @@ analyzeResultsParallel(entrance_rays, exit_rays, exit_norms)
 if(saveFolder != ''):
     dataFile.close()
 # return entrance_rays, exit_rays, exit_norms
-    
+
 print("--- %s seconds ---" % (time.time() - start_time))

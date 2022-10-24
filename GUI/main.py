@@ -1,8 +1,9 @@
 # This Python file uses the following encoding: utf-8
 import sys
 import os
+os.environ['QT_MAC_WANTS_LAYER'] = '1'
 
-from PySide2 import QtWidgets
+from PySide2 import QtWidgets, QtCore
 from PySide2.QtWidgets import QApplication, QWidget
 from PySide2.QtCore import QFile
 from PySide2 import QtGui
@@ -624,8 +625,8 @@ class testingQT(QWidget):
                     elif events[-1] == photon_tracer.Event.EXIT:
                         exit_norms.append(surfnorms[-2])
                         j = surfnorms[-2]
-                        if abs(j[2]) <= 0.5:
-                            edge_emit+=1
+                        # if abs(j[2]) <= 0.5:
+                        #     edge_emit+=1
                         exit_rays.append(path[-2]) 
                     f += 1
                     bar.update(f)
@@ -933,6 +934,7 @@ class testingQT(QWidget):
         
 #%% main
 if __name__ == "__main__":
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
     app = QApplication.instance()
     if app == None:
         app = QApplication([])
