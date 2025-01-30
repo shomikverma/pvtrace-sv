@@ -186,7 +186,9 @@ def follow(scene, ray, maxsteps=1000, maxpathlength=np.inf, emit_method='kT'):
             if surface.is_reflected(ray, hit.geometry, container, adjacent):
                 ray = surface.reflect(ray, hit.geometry, container, adjacent)
                 ray = ray.representation(hit, scene.root)
-                history.append((ray, hit.geometry.normal(ray.position),Event.REFLECT))
+                # history.append((ray, hit.geometry.normal(list(np.array(ray.position)-np.array([0,0,0.5]))),Event.REFLECT))
+                history.append((ray, hit.geometry.normal(list(np.array(ray.position)-np.array(hit.location))),Event.REFLECT))
+                # history.append((ray, hit.geometry.normal(ray.position),Event.REFLECT))
 #                print(hit.geometry.normal(ray.position))
                 #print("REFLECT", ray)
                 continue
@@ -196,7 +198,9 @@ def follow(scene, ray, maxsteps=1000, maxpathlength=np.inf, emit_method='kT'):
                 #    raise ValueError("Ray did not refract.")
                 ray = ref_ray
                 ray = ray.representation(hit, scene.root)
-                history.append((ray, hit.geometry.normal(ray.position),Event.TRANSMIT))
+                # history.append((ray, hit.geometry.normal(list(np.array(ray.position)-np.array([0,0,0.5]))),Event.TRANSMIT))
+                history.append((ray, hit.geometry.normal(list(np.array(ray.position)-np.array(hit.location))),Event.TRANSMIT))
+                # history.append((ray, hit.geometry.normal(ray.position),Event.TRANSMIT))
 #                print(hit.geometry.normal(ray.position))
                 #print("TRANSMIT", ray)
                 continue

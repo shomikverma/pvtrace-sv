@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 # Set reasonable precision for comparing floats to zero. Originally the multiplier was
 # 10, but I needed to set this to 1000 because some of the trimesh distance methods
 # do not see as accurate as with primitive shapes.
-EPS_ZERO = np.finfo(float).eps * 1000
+EPS_ZERO = np.finfo(float).eps * 1e3
 
 
 def on_aabb_surface(size, point, centre=(0.0, 0.0, 0.0), atol=EPS_ZERO):

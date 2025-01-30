@@ -43,6 +43,8 @@ class testingQT(QWidget):
         self.lumophore = self.findChild(QtWidgets.QComboBox,'comboBox_2')
         self.lumophoreConc = self.findChild(QtWidgets.QLineEdit,'lineEdit_20')
         self.waveguideAbs = self.findChild(QtWidgets.QLineEdit,'lineEdit_23')
+        self.waveguideN = self.findChild(QtWidgets.QLineEdit,'lineEdit_24')
+        self.lumophorePLQY = self.findChild(QtWidgets.QLineEdit,'lineEdit_25')
         self.dimx = self.findChild(QtWidgets.QLineEdit,'lineEdit')
         self.dimy = self.findChild(QtWidgets.QLineEdit,'lineEdit_13')
         self.dimz = self.findChild(QtWidgets.QLineEdit,'lineEdit_2')
@@ -58,6 +60,9 @@ class testingQT(QWidget):
         self.solarFaceBack = self.findChild(QtWidgets.QCheckBox,'checkBox_6')
         self.bottomMir = self.findChild(QtWidgets.QCheckBox,'checkBox_2')
         self.bottomScat = self.findChild(QtWidgets.QCheckBox,'checkBox_19')
+
+        self.thinFilm = self.findChild(QtWidgets.QCheckBox,'checkBox_7')
+        self.thinFilmThickness = self.findChild(QtWidgets.QLineEdit,'lineEdit_14')
     
         self.LSClayers = self.findChild(QtWidgets.QTabWidget,'tabWidget')
         
@@ -85,6 +90,8 @@ class testingQT(QWidget):
         self.saveInputs = self.findChild(QtWidgets.QPushButton, 'pushButton_2')
         self.saveInputsFile = self.findChild(QtWidgets.QLineEdit,'lineEdit_22')
         self.loadInputs = self.findChild(QtWidgets.QPushButton, 'pushButton_3')
+
+        
         
         # to do
         # absorption/scattering of waveguide
@@ -112,6 +119,8 @@ class testingQT(QWidget):
         
         self.finishInput = self.findChild(QtWidgets.QPushButton, 'pushButton')
         self.finishInput.clicked.connect(self.onFinishInputClicked)
+        self.thinFilm.clicked.connect(self.onThinFilmClicked)
+        
         
         
 
@@ -140,7 +149,12 @@ class testingQT(QWidget):
         self.solarFaceRight.setChecked(allEnabled)
         self.solarFaceFront.setChecked(allEnabled)
         self.solarFaceBack.setChecked(allEnabled)
-        
+    
+    def onThinFilmClicked(self):
+        if(self.thinFilm.isChecked()):
+            self.thinFilmThickness.setEnabled(True)
+        else:
+            self.thinFilmThickness.setEnabled(False)
     
     def onLightWavMinChanged(self):
         pass
@@ -194,6 +208,7 @@ class testingQT(QWidget):
             'PVedgesLRFB': [self.solarFaceLeft.isChecked(), self.solarFaceRight.isChecked(), self.solarFaceFront.isChecked(), self.solarFaceBack.isChecked()],
             'bottomMir': self.bottomMir.isChecked(),
             'bottomScat': self.bottomScat.isChecked(),
+            'thinFilm': self.thinFilm.isChecked(),
             'lumophore': self.lumophore.currentText(),
             'lumophoreConc': (self.lumophoreConc.text()),
             'waveguideAbs': (self.waveguideAbs.text()),
@@ -239,6 +254,7 @@ class testingQT(QWidget):
                 self.solarFaceBack.setChecked(solarFacesArr[3])
                 self.bottomMir.setChecked(p['bottomMir'])
                 self.bottomScat.setChecked(p['bottomScat'])
+                self.thinFilm.setChecked(p['thinFilm'])
                 self.lumophore.setCurrentText(p['lumophore'])
                 self.lumophoreConc.setText(p['lumophoreConc'])
                 try:
@@ -323,14 +339,14 @@ class testingQT(QWidget):
             
             return world
         
-        def createBoxLSC(dimX, dimY, dimZ, wavAbs):
+        def createBoxLSC(dimX, dimY, dimZ, wavAbs, wavN):
             LSC = Node(
                 name = "LSC",
                 geometry = 
                 Box(
                     (dimX, dimY, dimZ),
                     material = Material(
-                        refractive_index = 1.5,
+                        refractive_index = wavN,
                         components = [
                             Absorber(coefficient = wavAbs*1.0), 
                             Scatterer(coefficient = wavAbs*0.0)
@@ -342,14 +358,14 @@ class testingQT(QWidget):
             
             return LSC
         
-        def createCylLSC(dimXY, dimZ, wavAbs):
+        def createCylLSC(dimXY, dimZ, wavAbs, wavN):
             LSC = Node(
                 name = "LSC",
                 geometry = 
                 Cylinder(
                     dimZ, dimXY/2,
                     material = Material(
-                        refractive_index = 1.5,
+                        refractive_index = wavN,
                         components = [
                             Absorber(coefficient = wavAbs), 
                             ]
@@ -360,14 +376,14 @@ class testingQT(QWidget):
             
             return LSC
         
-        def createSphLSC(dimXYZ, wavAbs):
+        def createSphLSC(dimXYZ, wavAbs, wavN):
             LSC = Node(
                 name = "LSC",
                 geometry = 
                 Sphere(
                     dimXYZ/2,
                     material = Material(
-                        refractive_index = 1.5,
+                        refractive_index = wavN,
                         components = [
                             Absorber(coefficient = wavAbs), 
                             ]
@@ -378,14 +394,14 @@ class testingQT(QWidget):
             
             return LSC
         
-        def createMeshLSC(self, wavAbs):
+        def createMeshLSC(self, wavAbs, wavN):
             LSC = Node(
                 name = "LSC",
                 geometry = 
                 Mesh(
                     trimesh = trimesh.load(self.STLfile),
                     material = Material(
-                        refractive_index = 1.5,
+                        refractive_index = wavN,
                         components = [
                             Absorber(coefficient = wavAbs*1.00), 
                             Scatterer(coefficient = wavAbs*0.00)
@@ -398,7 +414,7 @@ class testingQT(QWidget):
             LSC.location = [0,0,0]
             return LSC
         
-        def addLR305(LSC, LumConc):
+        def addLR305(LSC, LumConc, LumPLQY):
             wavelength_range = (wavMin, wavMax)
             x = np.linspace(wavMin, wavMax, 200)  # wavelength, units: nm
             absorption_spectrum = lumogen_f_red_305.absorption(x)/10*LumConc  # units: cm-1
@@ -407,7 +423,7 @@ class testingQT(QWidget):
                 Luminophore(
                     coefficient=np.column_stack((x, absorption_spectrum)),
                     emission=np.column_stack((x, emission_spectrum)),
-                    quantum_yield=1.0,
+                    quantum_yield=LumPLQY/100,
                     phase_function=isotropic
                     )
                 )
@@ -625,8 +641,8 @@ class testingQT(QWidget):
                     elif events[-1] == photon_tracer.Event.EXIT:
                         exit_norms.append(surfnorms[-2])
                         j = surfnorms[-2]
-                        # if abs(j[2]) <= 0.5:
-                        #     edge_emit+=1
+                        if abs(j[2]) <= 0.5:
+                            edge_emit+=1
                         exit_rays.append(path[-2]) 
                     f += 1
                     bar.update(f)
@@ -780,6 +796,8 @@ class testingQT(QWidget):
             scatter(xpos_ent, ypos_ent, alpha=1.0, color=colors_ent)
             scatter(xpos_exit, ypos_exit, alpha=1.0, color=colors_exit)
             plt.title('entrance/exit positions')
+            plt.xlabel('x position')
+            plt.ylabel('y position')
             plt.axis('equal')
             if(self.saveFolder!=''):
                 plt.savefig(self.saveFolder+"/"+"xy_plot.png", dpi=figDPI)
@@ -829,6 +847,73 @@ class testingQT(QWidget):
             if(self.saveFolder!=''):
                 plt.savefig(self.saveFolder+"/"+"conv_plot2.png", dpi=figDPI)
             plt.pause(0.00001)
+
+            fig = plt.figure(6, clear=True, figsize=(3, 10))
+            fig.add_subplot(515)
+            norm = plt.Normalize(*(wavMin,wavMax))
+            wl = np.arange(wavMin, wavMax+1,2)
+            colorlist = list(zip(norm(wl), [np.array(wavelength_to_rgb(w))/255 for w in wl]))
+            spectralmap = matplotlib.colors.LinearSegmentedColormap.from_list("spectrum", colorlist)
+            colors_ent = [spectralmap(norm(value)) for value in entrance_wavs]
+            colors_exit = [spectralmap(norm(value)) for value in exit_wavs]
+            scatter(xpos_ent, ypos_ent, alpha=1.0, color=colors_ent)
+            scatter(xpos_exit, ypos_exit, alpha=1.0, color=colors_exit)
+            # plt.title('entrance/exit positions')
+            plt.xlabel('x position')
+            plt.ylabel('y position')
+            plt.axis('equal')
+            plt.ylim(-2, 2)
+            # plt.title('Entrance/exit ray positions')
+            plt.tight_layout()
+
+            fig.add_subplot(513)
+            n, bins, patches = hist(entrance_wavs, bins = 10, histtype = 'step', label='entrance wavs')
+            plot(wavelengths, intensity/max(intensity)*max(n))
+            # plt.title('Entrance wavelengths')
+            plt.xlabel('wavelength (nm)')
+            plt.ylabel('counts (entrance)')
+            plt.legend()
+            plt.grid()
+            plt.pause(0.00001)
+            plt.tight_layout()
+            
+            fig.add_subplot(514)
+            n, bins, patches = hist(emit_wavs, bins = 10, histtype = 'step', label='emit wavs')
+            if(self.lumophore.currentText() != 'None' ):
+                plot(x, abs_spec*max(n), label = 'LR305 abs')
+                plot(x, ems_spec*max(n), label = 'LR305 emis')
+            # plt.title('Re-emitted light wavelengths')
+            plt.xlabel('wavelength (nm)')
+            plt.ylabel('counts (re-emitted)')
+            plt.legend(loc='upper left', fontsize='small')
+            plt.grid()
+            plt.pause(0.00001)
+            plt.tight_layout()
+            
+            fig.add_subplot(511)
+            if(not convPlot):
+                plot(range(len(entrance_rays)), self.ydata)
+            # plt.title('optical efficiency vs. rays generated')
+            plt.grid(True)
+            plt.xlabel('num rays')
+            plt.ylabel('opt. eff.')
+            plt.pause(0.00001)
+            plt.tight_layout()
+            
+            fig.add_subplot(512)
+            if(not convPlot):
+                plot(range(len(entrance_rays)), self.convarr)
+            # plt.title('convergence')
+            plt.grid(True)
+            plt.xlabel('num rays')
+            plt.ylabel('convergence')
+            plt.yscale('log')
+            plt.pause(0.00001)
+            plt.tight_layout()
+
+            if(self.saveFolder!=''):
+                plt.savefig(self.saveFolder+"/"+"plots.png", dpi=figDPI)
+
             
 
         #%% define inputs
@@ -838,9 +923,13 @@ class testingQT(QWidget):
         LSCdimY = float(self.dimy.text())
         LSCdimZ = float(self.dimz.text())
         LSCshape = self.inputShape.currentText()
+        thinFilm = self.thinFilm.isChecked()
+        thinFilmThick = float(self.thinFilmThickness.text())
         LumType = self.lumophore.currentText()
         LumConc = float(self.lumophoreConc.text())
+        LumPLQY = float(self.lumophorePLQY.text())
         wavAbs = float(self.waveguideAbs.text())
+        wavN = float(self.waveguideN.text())
         lightWavMin = float(self.lightWavMin.text())
         lightWavMax = float(self.lightWavMax.text())
         lightPattern = self.lightPattern.currentText()
@@ -869,7 +958,7 @@ class testingQT(QWidget):
         world = createWorld(max(LSCdimX, LSCdimY, maxZ))
         
         if(enclosingBox):
-            enclBox = createBoxLSC(LSCdimX*1.32, LSCdimY*1.32, LSCdimZ*1.1,0)
+            enclBox = createBoxLSC(LSCdimX*1.32, LSCdimY*1.32, LSCdimZ*1.1,0,wavN)
             if(len(widget.LSCbounds)>0):
                 
                 enclBox.location = [ (self.LSCbounds[0][0] + LSCbounds[1][0])/2, (LSCbounds[0][1] + LSCbounds[1][1])/2, 0]
@@ -878,38 +967,52 @@ class testingQT(QWidget):
             del enclBox.geometry.material.components[0:2]
             enclBox.geometry.material.surface = Surface(delegate = NullSurfaceDelegate())
         
-        if(LSCshape == 'Box'):
-            LSC = createBoxLSC(LSCdimX, LSCdimY, LSCdimZ, wavAbs)
-        if(LSCshape == 'Cylinder'):
-            LSC = createCylLSC(LSCdimX, LSCdimZ, wavAbs)
-        if(LSCshape == 'Sphere'):
-            LSC = createSphLSC(LSCdimX, wavAbs)
-        if(LSCshape == 'Import Mesh'):
-            LSC = createMeshLSC(self, wavAbs)
-            # if(not np.isclose(LSC.location, LSC.geometry.trimesh.centroid).all()):
-            #     LSC.translate(-LSC.geometry.trimesh.centroid)
-            # LSCmeshdims = LSC.geometry.trimesh.extents
-            if(self.rotateY):
-                LSC.rotate(np.radians(90),(0,1,0))
-            if(self.rotateX):
-                LSC.rotate(np.radians(90),(1,0,0))
-            # if(LSCmeshdims[0] < LSCmeshdims[2]):
-            #     LSC.rotate(np.radians(90),(0,1,0))
-            #     temp = LSCdimZ
-            #     LSCdimZ = LSCdimX
-            #     LSCdimX = temp
-            #     lightDimX = LSCdimX
-            #     maxZ = LSCdimZ
-            # elif(LSCmeshdims[1] < LSCmeshdims[2]):
-            #     LSC.rotate(np.radians(90),(1,0,0))
-            #     temp = LSCdimZ
-            #     LSCdimZ = LSCdimY
-            #     LSCdimY = temp
-            #     lightDimY = LSCdimY
-            #     maxZ = LSCdimZ
+        if not thinFilm:
+            if(LSCshape == 'Box'):
+                LSC = createBoxLSC(LSCdimX, LSCdimY, LSCdimZ, wavAbs, wavN)
+            if(LSCshape == 'Cylinder'):
+                LSC = createCylLSC(LSCdimX, LSCdimZ, wavAbs, wavN)
+            if(LSCshape == 'Sphere'):
+                LSC = createSphLSC(LSCdimX, wavAbs, wavN)
+            if(LSCshape == 'Import Mesh'):
+                LSC = createMeshLSC(self, wavAbs, wavN)
+                # if(not np.isclose(LSC.location, LSC.geometry.trimesh.centroid).all()):
+                #     LSC.translate(-LSC.geometry.trimesh.centroid)
+                # LSCmeshdims = LSC.geometry.trimesh.extents
+                if(self.rotateY):
+                    LSC.rotate(np.radians(90),(0,1,0))
+                if(self.rotateX):
+                    LSC.rotate(np.radians(90),(1,0,0))
+                # if(LSCmeshdims[0] < LSCmeshdims[2]):
+                #     LSC.rotate(np.radians(90),(0,1,0))
+                #     temp = LSCdimZ
+                #     LSCdimZ = LSCdimX
+                #     LSCdimX = temp
+                #     lightDimX = LSCdimX
+                #     maxZ = LSCdimZ
+                # elif(LSCmeshdims[1] < LSCmeshdims[2]):
+                #     LSC.rotate(np.radians(90),(1,0,0))
+                #     temp = LSCdimZ
+                #     LSCdimZ = LSCdimY
+                #     LSCdimY = temp
+                #     lightDimY = LSCdimY
+                #     maxZ = LSCdimZ
+        else:
+            if(LSCshape == 'Box'):
+                LSC = createBoxLSC(LSCdimX, LSCdimY, thinFilmThick, wavAbs, wavN)
+                bulk_undoped = createBoxLSC(LSCdimX, LSCdimY, LSCdimZ, wavAbs, wavN)
+            if(LSCshape == 'Cylinder'):
+                LSC = createCylLSC(LSCdimX, thinFilmThick, wavAbs, wavN)
+                bulk_undoped = createCylLSC(LSCdimX, LSCdimZ, wavAbs, wavN)
+            if(LSCshape == 'Import Mesh'):
+                LSC = createMeshLSC(self, wavAbs, wavN)
+                LSC.geometry.trimesh.apply_scale(1,1,thinFilmThick/LSCdimZ)
+                bulk_undoped = createMeshLSC(self, wavAbs, wavN)
+            LSC.location = (0,0,LSCdimZ/2)
+            bulk_undoped.name = "bulk"
             
         if(LumType == 'Lumogen Red'):
-            LSC, x, abs_spec, ems_spec = addLR305(LSC, LumConc)
+            LSC, x, abs_spec, ems_spec = addLR305(LSC, LumConc, LumPLQY)
             
         
         LSC = addSolarCells(LSC, solLeft, solRight, solFront, solBack, solAll)

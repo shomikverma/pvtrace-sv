@@ -92,12 +92,12 @@ def createSphLSC(dimXYZ):
 
     return LSC
 
-def createMeshLSC(self):
+def createMeshLSC(STLfile):
     LSC = Node(
         name = "LSC",
         geometry =
         Mesh(
-            trimesh = trimesh.load(STLfile),
+            trimesh = trimesh.load(STLfile, file_type='stl'),
             material = Material(
                 refractive_index = 1.5,
                 components = [
@@ -719,8 +719,11 @@ wavMax = 1000
 LSCdimX = 6
 LSCdimY = 6
 LSCdimZ = .32
-LSCshape = 'Box'
-STLfile = ''
+LSCshape = 'Import Mesh'
+thin_film_thickness = 0.01
+STLfile = 'LSC_LR305_conc_1_gcode.stl'
+# create a file object from string
+# STLfile = open('LSC_LR305_conc_1_gcode.stl', 'r')
 LumType = 'Lumogen Red'
 LumConc = 500
 lightWavMin = 300
@@ -771,7 +774,7 @@ if(LSCshape == 'Cylinder'):
 if(LSCshape == 'Sphere'):
     LSC = createSphLSC(LSCdimX)
 if(LSCshape == 'Import Mesh'):
-    LSC = createMeshLSC()
+    LSC = createMeshLSC(STLfile)
     LSCmeshdims = LSC.geometry.trimesh.extents
     # if(rotateY):
     #     LSC.rotate(np.radians(90),(0,1,0))
@@ -791,6 +794,11 @@ if(LSCshape == 'Import Mesh'):
         LSCdimY = temp
         lightDimY = LSCdimY
         maxZ = LSCdimZ
+if(LSCshape == 'Thin Film'):
+    LSC = createBoxLSC(LSCdimX, LSCdimY, thin_film_thickness)
+    LSC.location = (0,0,LSCdimZ/2)
+    bulk_undoped = createBoxLSC(LSCdimX, LSCdimY, LSCdimZ)
+    bulk_undoped.name = "bulk"
 
 if(LumType == 'Lumogen Red'):
     LSC, x, abs_spec, ems_spec = addLR305(LSC)
